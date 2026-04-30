@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: flipclass-backend
+    runtime: python
+    pythonVersion: 3.11
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_ENV
+        value: production
+    sourceDir: ./
+
+  - type: web
+    name: flipclass-frontend
+    runtime: node
+    nodeVersion: 18
+    buildCommand: cd frontend && npm install && npm run build
+    startCommand: cd frontend && npm run preview
+    envVars:
+      - key: VITE_API_URL
+        value: https://flipclass-backend.onrender.com
+    sourceDir: ./

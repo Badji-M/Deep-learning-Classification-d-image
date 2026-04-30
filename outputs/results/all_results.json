@@ -1,0 +1,36 @@
+{
+  "class_names": [
+    "Baby Care",
+    "Beauty and Personal Care",
+    "Computers",
+    "Home Decor & Festive Needs",
+    "Home Furnishing",
+    "Kitchen & Dining",
+    "Watches"
+  ],
+  "n_classes": 7,
+  "img_size": [
+    96,
+    96
+  ],
+  "models": [
+    {
+      "name": "CNN (scratch)",
+      "model_file": "cnn_scratch.keras",
+      "accuracy": 0.1524,
+      "f1_score": 0.0598
+    },
+    {
+      "name": "ResNet50 (TL)",
+      "model_file": "resnet50.keras",
+      "accuracy": 0.7667,
+      "f1_score": 0.7666
+    },
+    {
+      "name": "EfficientNetB0 (TL)",
+      "model_file": "efficientnet.keras",
+      "accuracy": 0.7905,
+      "f1_score": 0.7877
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+runtime: python-3.11
+
+# Build environment
+build:
+  pip install -r backend/requirements.txt
+
+# Deployment configuration
+deployment:
+  host: 0.0.0.0
+  port: $PORT
+
+# Environment setup
+env:
+  PYTHON_ENV: production
+  PYTHONUNBUFFERED: 1

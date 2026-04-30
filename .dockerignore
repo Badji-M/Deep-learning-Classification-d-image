@@ -1,0 +1,26 @@
+# .dockerignore - Files to exclude from Docker build
+
+node_modules
+npm-debug.log
+.git
+.gitignore
+.env
+.env.local
+README.md
+DEPLOYMENT.md
+deploy.sh
+.DS_Store
+__pycache__
+.pytest_cache
+venv
+venv311
+.vscode
+.idea
+.pytest_cache
+*.egg-info
+.coverage
+htmlcov
+build
+dist
+notebooks
+data/raw/images
