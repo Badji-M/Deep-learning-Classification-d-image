@@ -60,7 +60,6 @@ backend/ENV/
 data/raw/flipkart.csv
 data/processed/
 outputs/models/
-outputs/plots/
 notebooks/.ipynb_checkpoints/
 
 # Misc
