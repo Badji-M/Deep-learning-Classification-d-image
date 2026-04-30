@@ -10,6 +10,7 @@ import cv2
 from pathlib import Path
 from typing import List
 import time
+import urllib.request
 
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -42,12 +43,36 @@ metadata = None
 # Startup & Shutdown
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+def download_model_from_release(model_name: str, url: str, save_path: Path) -> bool:
+    """Download model from GitHub Releases if not exists"""
+    if save_path.exists():
+        print(f"[OK] Model exists: {model_name}")
+        return True
+    
+    try:
+        print(f"[INFO] Downloading {model_name} from GitHub Releases...")
+        save_path.parent.mkdir(parents=True, exist_ok=True)
+        urllib.request.urlretrieve(url, str(save_path))
+        print(f"[OK] Downloaded {model_name} ({save_path.stat().st_size / 1e6:.1f} MB)")
+        return True
+    except Exception as e:
+        print(f"[ERROR] Failed to download {model_name}: {e}")
+        return False
+
 @app.on_event("startup")
 async def startup():
     """Load models and metadata on startup"""
     global models_cache, metadata
     
     print("[INFO] Starting up FastAPI server...")
+    
+    # Download large models from GitHub Releases if needed
+    resnet50_path = MODELS_DIR / "resnet50.keras"
+    download_model_from_release(
+        "ResNet50",
+        "https://github.com/Badji-M/Deep-learning-Classification-d-image/releases/download/v1.0-resnet50/resnet50.keras",
+        resnet50_path
+    )
     
     # Load metadata
     try:
