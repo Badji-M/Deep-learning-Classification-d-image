@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "flipclass"
+version = "1.0.0"
+description = "Deep Learning Image Classification"
+authors = ["Your Name <you@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "0.104.1"
+uvicorn = "0.24.0"
+python-multipart = "0.0.6"
+tensorflow = "2.15.0"
+keras = "3.14.0"
+opencv-python-headless = "4.10.0.84"
+numpy = "2.1.0"
+pillow = ">=10.1.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
