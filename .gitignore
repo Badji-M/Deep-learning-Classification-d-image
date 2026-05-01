@@ -58,7 +58,6 @@ backend/ENV/
 # Data & Models (large files - exclude from version control)
 # Keep only sample images in data/raw/images/
 # Push cnn_scratch and efficientnet, exclude large resnet50
-data/raw/flipkart.csv
 data/processed/
 outputs/models/resnet50.keras
 notebooks/.ipynb_checkpoints/

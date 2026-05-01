@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { api } from '../api'
 
 interface PerformancePanelProps {
   metadata: any
@@ -307,7 +308,7 @@ export default function PerformancePanel({ metadata }: PerformancePanelProps) {
             <div className="bg-white p-6 rounded-lg border-2 border-gray-300 shadow-sm">
               <h3 className="font-bold text-gray-800 mb-4">Comparaison Globale des Courbes</h3>
               <img
-                src="/api/plots/06_training_curves_all.png"
+                src={api.getPlotURL('06_training_curves_all.png')}
                 alt="Training curves comparison"
                 className="w-full rounded-lg border border-gray-200"
               />
@@ -325,7 +326,7 @@ export default function PerformancePanel({ metadata }: PerformancePanelProps) {
                   <div key={idx} className={`bg-white p-4 rounded-lg border-2 ${model.color} shadow-sm`}>
                     <h4 className="font-semibold text-gray-800 mb-3 text-center">{model.name}</h4>
                     <img
-                      src={`/api/plots/${model.file}`}
+                      src={api.getPlotURL(model.file)}
                       alt={`${model.name} training curves`}
                       className="w-full rounded-lg border border-gray-200"
                     />

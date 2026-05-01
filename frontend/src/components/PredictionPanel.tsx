@@ -19,8 +19,7 @@ export default function PredictionPanel({ metadata }: PredictionPanelProps) {
   useEffect(() => {
     const loadSamples = async () => {
       try {
-        const response = await fetch('/api/sample-images')
-        const data = await response.json()
+        const data = await api.getSampleImages()
         setSampleImages(data.samples || [])
       } catch (err) {
         console.error('Failed to load sample images:', err)
@@ -105,7 +104,7 @@ export default function PredictionPanel({ metadata }: PredictionPanelProps) {
 
   const loadSampleImage = async (filename: string) => {
     try {
-      const response = await fetch(`/api/sample-images/${filename}`)
+      const response = await fetch(api.getSampleImageURL(filename))
       if (!response.ok) throw new Error('Failed to load sample image')
       const blob = await response.blob()
       const file = new File([blob], filename, { type: blob.type })
@@ -195,7 +194,7 @@ export default function PredictionPanel({ metadata }: PredictionPanelProps) {
                   className="relative group overflow-hidden rounded-lg border-2 border-gray-200 hover:border-blue-400 transition hover:shadow-md"
                 >
                   <img
-                    src={`/api/sample-images/${img}`}
+                    src={api.getSampleImageURL(img)}
                     alt={`Sample ${idx + 1}`}
                     className="w-full h-20 object-cover group-hover:scale-110 transition"
                   />
