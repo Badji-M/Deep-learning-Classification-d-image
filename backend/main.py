@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import List
 import time
 import urllib.request
+import threading
 
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -59,6 +60,44 @@ def download_model_from_release(model_name: str, url: str, save_path: Path) -> b
         print(f"[ERROR] Failed to download {model_name}: {e}")
         return False
 
+def _download_models_background():
+    """Download models in background thread"""
+    print("[INFO] Background: Starting model downloads...")
+    resnet50_path = MODELS_DIR / "resnet50.keras"
+    download_model_from_release(
+        "ResNet50",
+        "https://github.com/Badji-M/Deep-learning-Classification-d-image/releases/download/v1.0-resnet50/resnet50.keras",
+        resnet50_path
+    )
+    # Load the model after download
+    if resnet50_path.exists():
+        try:
+            model = tf.keras.models.load_model(str(resnet50_path))
+            models_cache["ResNet50"] = model
+            print("[OK] ResNet50 loaded after download")
+        except Exception as e:
+            print(f"[ERROR] Failed to load ResNet50 after download: {e}")
+
+def get_model(model_name: str):
+    """Get model from cache or load if missing"""
+    if model_name in models_cache:
+        return models_cache[model_name]
+    
+    # Try to load from disk if not in cache
+    model_file = next((m["model_file"] for m in metadata.get("models", []) if m["name"] == model_name), None)
+    if model_file:
+        model_path = MODELS_DIR / model_file
+        if model_path.exists():
+            try:
+                model = tf.keras.models.load_model(str(model_path))
+                models_cache[model_name] = model
+                print(f"[OK] Loaded {model_name} on-demand")
+                return model
+            except Exception as e:
+                print(f"[ERROR] Failed to load {model_name}: {e}")
+    
+    return None
+
 @app.on_event("startup")
 async def startup():
     """Load models and metadata on startup"""
@@ -66,15 +105,10 @@ async def startup():
     
     print("[INFO] Starting up FastAPI server...")
     
-    # Download large models from GitHub Releases if needed
-    resnet50_path = MODELS_DIR / "resnet50.keras"
-    download_model_from_release(
-        "ResNet50",
-        "https://github.com/Badji-M/Deep-learning-Classification-d-image/releases/download/v1.0-resnet50/resnet50.keras",
-        resnet50_path
-    )
+    # Start background download (non-blocking)
+    threading.Thread(target=_download_models_background, daemon=True).start()
     
-    # Load metadata
+    # Load metadata immediately
     try:
         results_file = RESULTS_DIR / "all_results.pkl"
         if not results_file.exists():
@@ -93,7 +127,7 @@ async def startup():
         print(f"[ERROR] Failed to load metadata: {e}")
         metadata = None
     
-    # Load models
+    # Load available models (non-blocking, won't fail if resnet50 not ready)
     try:
         for model_info in metadata.get("models", []):
             model_name = model_info["name"]
@@ -101,11 +135,14 @@ async def startup():
             model_path = MODELS_DIR / model_file
             
             if model_path.exists():
-                model = tf.keras.models.load_model(str(model_path))
-                models_cache[model_name] = model
-                print(f"[OK] Loaded model: {model_name}")
+                try:
+                    model = tf.keras.models.load_model(str(model_path))
+                    models_cache[model_name] = model
+                    print(f"[OK] Loaded model: {model_name}")
+                except Exception as e:
+                    print(f"[WARN] Failed to load {model_name}: {e}")
             else:
-                print(f"[WARN] Model not found: {model_file}")
+                print(f"[WARN] Model not found: {model_file} (will be available after download)")
     except Exception as e:
         print(f"[ERROR] Failed to load models: {e}")
 
