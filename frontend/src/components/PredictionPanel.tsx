@@ -209,14 +209,14 @@ export default function PredictionPanel({ metadata }: PredictionPanelProps) {
                 <button
                   key={idx}
                   onClick={() => loadSampleImage(img)}
-                  className="relative group overflow-hidden rounded-lg border-2 border-gray-200 hover:border-blue-400 transition hover:shadow-md"
+                  className="relative group overflow-hidden rounded-lg border-2 border-gray-200 hover:border-blue-400 hover:shadow-md active:scale-95"
                 >
                   <img
                     src={api.getSampleImageURL(img)}
                     alt={`Sample ${idx + 1}`}
-                    className="w-full h-20 object-cover group-hover:scale-110 transition"
+                    className="w-full h-20 object-cover"
                   />
-                  <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-30 transition flex items-center justify-center">
+                  <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-30 flex items-center justify-center">
                     <span className="text-white text-xs font-semibold">Charger</span>
                   </div>
                 </button>
