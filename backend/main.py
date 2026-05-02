@@ -252,11 +252,14 @@ async def get_sample_image(filename: str):
 @app.post("/api/predict")
 async def predict(file: UploadFile = File(...), model_name: str = "ResNet50 (TL)"):
     """Predict image class with specific model"""
-    if model_name not in models_cache:
-        raise HTTPException(status_code=404, detail=f"Model {model_name} not found")
     
     if not metadata:
         raise HTTPException(status_code=500, detail="Metadata not loaded")
+    
+    # Try to get model from cache or load from disk
+    model = get_model(model_name)
+    if not model:
+        raise HTTPException(status_code=404, detail=f"Model {model_name} not found or failed to load")
     
     try:
         # Read image
@@ -268,7 +271,6 @@ async def predict(file: UploadFile = File(...), model_name: str = "ResNet50 (TL)
         
         # Predict
         t0 = time.time()
-        model = models_cache[model_name]
         probs = model.predict(X, verbose=0)[0]
         elapsed = (time.time() - t0) * 1000
         
@@ -302,8 +304,8 @@ async def predict(file: UploadFile = File(...), model_name: str = "ResNet50 (TL)
 @app.post("/api/predict_all")
 async def predict_all(file: UploadFile = File(...)):
     """Predict with all models"""
-    if not models_cache or not metadata:
-        raise HTTPException(status_code=500, detail="Models or metadata not loaded")
+    if not metadata:
+        raise HTTPException(status_code=500, detail="Metadata not loaded")
     
     try:
         image_bytes = await file.read()
@@ -312,7 +314,17 @@ async def predict_all(file: UploadFile = File(...)):
         class_names = metadata.get("class_names", [])
         
         results = []
-        for model_name, model in models_cache.items():
+        for model_info in metadata.get("models", []):
+            model_name = model_info["name"]
+            model = get_model(model_name)
+            
+            if not model:
+                results.append({
+                    "model": model_name,
+                    "error": "Model not found or failed to load"
+                })
+                continue
+            
             t0 = time.time()
             probs = model.predict(X, verbose=0)[0]
             elapsed = (time.time() - t0) * 1000
