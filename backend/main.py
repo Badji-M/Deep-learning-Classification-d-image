@@ -204,6 +204,38 @@ async def get_metadata():
         ]
     }
 
+@app.get("/api/debug")
+async def debug():
+    """Debug endpoint to check backend state"""
+    import os
+    
+    models_status = {}
+    for model_name in ["CNN (scratch)", "ResNet50 (TL)", "EfficientNetB0 (TL)"]:
+        file_mapping = {
+            "CNN (scratch)": "cnn_scratch.keras",
+            "ResNet50 (TL)": "resnet50.keras",
+            "EfficientNetB0 (TL)": "efficientnet.keras"
+        }
+        model_file = file_mapping.get(model_name)
+        model_path = MODELS_DIR / model_file if model_file else None
+        
+        models_status[model_name] = {
+            "in_cache": model_name in models_cache,
+            "file": model_file,
+            "path": str(model_path) if model_path else None,
+            "exists": model_path.exists() if model_path else False,
+            "size_mb": model_path.stat().st_size / 1e6 if model_path and model_path.exists() else 0
+        }
+    
+    return {
+        "cache_keys": list(models_cache.keys()),
+        "metadata_loaded": metadata is not None,
+        "models": models_status,
+        "models_dir": str(MODELS_DIR),
+        "models_dir_exists": MODELS_DIR.exists(),
+        "files_in_dir": os.listdir(MODELS_DIR) if MODELS_DIR.exists() else []
+    }
+
 @app.get("/api/models")
 async def get_models():
     """Get list of available models"""
