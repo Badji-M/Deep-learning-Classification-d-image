@@ -7,7 +7,7 @@ interface PredictionPanelProps {
 
 export default function PredictionPanel({ metadata }: PredictionPanelProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [selectedModel, setSelectedModel] = useState('ResNet50 (TL)')
+  const [selectedModel, setSelectedModel] = useState('CNN (scratch)')
   const [prediction, setPrediction] = useState<any>(null)
   const [allPredictions, setAllPredictions] = useState<any>(null)
   const [loading, setLoading] = useState(false)
