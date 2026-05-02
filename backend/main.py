@@ -73,11 +73,16 @@ def _download_models_background():
     # Load the model after download
     if resnet50_path.exists():
         try:
+            print(f"[DEBUG] Background: Loading ResNet50 from {resnet50_path}...")
             model = tf.keras.models.load_model(str(resnet50_path))
-            models_cache["ResNet50"] = model
-            print("[OK] ResNet50 loaded after download")
+            models_cache["ResNet50 (TL)"] = model  # Use correct name from metadata
+            print("[OK] ✅ ResNet50 (TL) loaded in background after download")
         except Exception as e:
-            print(f"[ERROR] Failed to load ResNet50 after download: {e}")
+            print(f"[ERROR] ❌ Failed to load ResNet50 after download: {type(e).__name__}: {e}")
+            import traceback
+            print(f"[ERROR] Traceback: {traceback.format_exc()}")
+    else:
+        print("[ERROR] ResNet50 file not found after download attempt")
 
 def get_model(model_name: str):
     """Get model from cache or load if missing"""
@@ -140,22 +145,30 @@ async def startup():
     
     # Load available models (non-blocking, won't fail if resnet50 not ready)
     try:
+        print(f"[INFO] Loading models from metadata...")
         for model_info in metadata.get("models", []):
             model_name = model_info["name"]
             model_file = model_info["model_file"]
             model_path = MODELS_DIR / model_file
             
+            print(f"[DEBUG] Attempting to load: {model_name} from {model_path}")
+            
             if model_path.exists():
                 try:
+                    print(f"[DEBUG] File exists ({model_path.stat().st_size / 1e6:.1f} MB), loading with tf.keras...")
                     model = tf.keras.models.load_model(str(model_path))
                     models_cache[model_name] = model
-                    print(f"[OK] Loaded model: {model_name}")
+                    print(f"[OK] ✅ Loaded model: {model_name} (cache size: {len(models_cache)})")
                 except Exception as e:
-                    print(f"[WARN] Failed to load {model_name}: {e}")
+                    print(f"[ERROR] ❌ Failed to load {model_name}: {type(e).__name__}: {e}")
+                    import traceback
+                    print(f"[ERROR] Traceback: {traceback.format_exc()}")
             else:
-                print(f"[WARN] Model not found: {model_file} (will be available after download)")
+                print(f"[WARN] Model not found: {model_file} at {model_path}")
+        
+        print(f"[INFO] Startup complete. Models in cache: {list(models_cache.keys())}")
     except Exception as e:
-        print(f"[ERROR] Failed to load models: {e}")
+        print(f"[ERROR] Failed to load models: {type(e).__name__}: {e}")
 
 @app.on_event("shutdown")
 async def shutdown():
