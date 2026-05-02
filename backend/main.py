@@ -249,6 +249,48 @@ async def debug():
         "files_in_dir": os.listdir(MODELS_DIR) if MODELS_DIR.exists() else []
     }
 
+@app.get("/api/test-load/{model_name}")
+async def test_load(model_name: str):
+    """Test loading a specific model and return detailed error info"""
+    import os
+    
+    file_mapping = {
+        "cnn": "cnn_scratch.keras",
+        "resnet": "resnet50.keras",
+        "efficientnet": "efficientnet.keras"
+    }
+    
+    model_file = file_mapping.get(model_name.lower(), f"{model_name}.keras")
+    model_path = MODELS_DIR / model_file
+    
+    result = {
+        "model_name": model_name,
+        "file": model_file,
+        "path": str(model_path),
+        "exists": model_path.exists()
+    }
+    
+    if not model_path.exists():
+        result["error"] = "File not found"
+        return result
+    
+    result["size_mb"] = model_path.stat().st_size / 1e6
+    
+    try:
+        print(f"[TEST-LOAD] Attempting to load {model_file}...")
+        model = tf.keras.models.load_model(str(model_path))
+        result["success"] = True
+        result["model_type"] = str(type(model))
+        result["input_shape"] = str(model.input_shape)
+    except Exception as e:
+        result["success"] = False
+        result["error"] = str(e)
+        result["error_type"] = type(e).__name__
+        import traceback
+        result["traceback"] = traceback.format_exc()
+    
+    return result
+
 @app.get("/api/models")
 async def get_models():
     """Get list of available models"""
