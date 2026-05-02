@@ -7,7 +7,7 @@ interface PredictionPanelProps {
 
 export default function PredictionPanel({ metadata }: PredictionPanelProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [selectedModel, setSelectedModel] = useState('CNN (scratch)')
+  const [selectedModel, setSelectedModel] = useState('EfficientNetB0 (TL)')
   const [prediction, setPrediction] = useState<any>(null)
   const [allPredictions, setAllPredictions] = useState<any>(null)
   const [loading, setLoading] = useState(false)
@@ -136,6 +136,26 @@ export default function PredictionPanel({ metadata }: PredictionPanelProps) {
             <option value="All Models">Tous les modèles</option>
           </select>
         </div>
+
+        {/* ResNet50 Warning */}
+        {selectedModel === 'ResNet50 (TL)' && (
+          <div className="mb-6 p-4 bg-amber-50 border-l-4 border-amber-500 rounded-lg animate-in fade-in">
+            <div className="flex items-start">
+              <svg className="w-6 h-6 text-amber-500 mr-3 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd"></path>
+              </svg>
+              <div>
+                <p className="font-semibold text-amber-900">Modèle non disponible</p>
+                <p className="text-sm text-amber-800 mt-1">
+                  ResNet50 pèse 179+ MB. En raison des limites de Render (512 MB de RAM sur le free tier), ce modèle n'est pas disponible en production.
+                </p>
+                <p className="text-xs text-amber-700 mt-2">
+                  💡 Utilisez <strong>EfficientNetB0</strong> à la place (79% accuracy, seulement 37 MB)
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* File Upload */}
         <div className="mb-6">
