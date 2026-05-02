@@ -81,13 +81,22 @@ def _download_models_background():
 
 def get_model(model_name: str):
     """Get model from cache or load if missing"""
+    print(f"[get_model] Looking for '{model_name}'")
+    
     if model_name in models_cache:
+        print(f"[get_model] Found in cache")
         return models_cache[model_name]
     
     # Try to load from disk if not in cache
+    print(f"[get_model] Not in cache, searching in metadata...")
     model_file = next((m["model_file"] for m in metadata.get("models", []) if m["name"] == model_name), None)
+    print(f"[get_model] model_file for '{model_name}': {model_file}")
+    
     if model_file:
         model_path = MODELS_DIR / model_file
+        print(f"[get_model] Checking path: {model_path}")
+        print(f"[get_model] Path exists: {model_path.exists()}")
+        
         if model_path.exists():
             try:
                 model = tf.keras.models.load_model(str(model_path))
@@ -97,6 +106,7 @@ def get_model(model_name: str):
             except Exception as e:
                 print(f"[ERROR] Failed to load {model_name}: {e}")
     
+    print(f"[get_model] Model '{model_name}' not found")
     return None
 
 @app.on_event("startup")
@@ -253,12 +263,20 @@ async def get_sample_image(filename: str):
 async def predict(file: UploadFile = File(...), model_name: str = "ResNet50 (TL)"):
     """Predict image class with specific model"""
     
+    print(f"[DEBUG] Predict called with model_name='{model_name}'")
+    print(f"[DEBUG] models_cache keys: {list(models_cache.keys())}")
+    print(f"[DEBUG] metadata.models names: {[m['name'] for m in metadata.get('models', [])] if metadata else 'None'}")
+    
     if not metadata:
+        print(f"[ERROR] Metadata not loaded")
         raise HTTPException(status_code=500, detail="Metadata not loaded")
     
     # Try to get model from cache or load from disk
     model = get_model(model_name)
+    print(f"[DEBUG] get_model returned: {model is not None}")
+    
     if not model:
+        print(f"[ERROR] Model '{model_name}' not found or failed to load")
         raise HTTPException(status_code=404, detail=f"Model {model_name} not found or failed to load")
     
     try:
