@@ -102,6 +102,15 @@ def get_model(model_name: str):
         print(f"[get_model] Checking path: {model_path}")
         print(f"[get_model] Path exists: {model_path.exists()}")
         
+        # If model doesn't exist and it's ResNet50, try to download it
+        if not model_path.exists() and model_name == "ResNet50 (TL)":
+            print(f"[get_model] ResNet50 not found, attempting download...")
+            download_model_from_release(
+                "ResNet50",
+                "https://github.com/Badji-M/Deep-learning-Classification-d-image/releases/download/v1.0-resnet50/resnet50.keras",
+                model_path
+            )
+        
         if model_path.exists():
             try:
                 model = tf.keras.models.load_model(str(model_path))
@@ -121,8 +130,9 @@ async def startup():
     
     print("[INFO] Starting up FastAPI server...")
     
-    # Start background download (non-blocking)
-    threading.Thread(target=_download_models_background, daemon=True).start()
+    # Don't start background download on free tier Render (512 MB limit)
+    # ResNet50 will be downloaded on-demand when requested
+    # threading.Thread(target=_download_models_background, daemon=True).start()
     
     # Load metadata immediately
     try:
