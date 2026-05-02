@@ -32,7 +32,8 @@ app = FastAPI(title="Product Classification API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,    allow_methods=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
@@ -209,7 +210,9 @@ async def get_plot(filename: str):
     if not plot_path.exists():
         raise HTTPException(status_code=404, detail=f"Plot {filename} not found")
     
-    return FileResponse(plot_path, media_type="image/png")
+    response = FileResponse(plot_path, media_type="image/png")
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    return response
 
 @app.get("/api/sample-images")
 async def get_sample_images():
@@ -242,7 +245,9 @@ async def get_sample_image(filename: str):
     if not image_path.exists():
         raise HTTPException(status_code=404, detail=f"Image {filename} not found")
     
-    return FileResponse(image_path, media_type="image/jpeg")
+    response = FileResponse(image_path, media_type="image/jpeg")
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    return response
 
 @app.post("/api/predict")
 async def predict(file: UploadFile = File(...), model_name: str = "ResNet50 (TL)"):

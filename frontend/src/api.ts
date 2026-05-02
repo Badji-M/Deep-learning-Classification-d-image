@@ -42,6 +42,14 @@ export const api = {
     return data;
   },
 
+  async getSampleImageBlob(filename: string) {
+    const { data } = await axios.get(
+      `${API_BASE}/api/sample-images/${filename}`,
+      { responseType: 'blob' }
+    );
+    return data;
+  },
+
   getSampleImageURL(filename: string) {
     return `${API_BASE}/api/sample-images/${filename}`;
   },

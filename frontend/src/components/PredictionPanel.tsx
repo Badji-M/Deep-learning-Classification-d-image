@@ -104,10 +104,8 @@ export default function PredictionPanel({ metadata }: PredictionPanelProps) {
 
   const loadSampleImage = async (filename: string) => {
     try {
-      const response = await fetch(api.getSampleImageURL(filename))
-      if (!response.ok) throw new Error('Failed to load sample image')
-      const blob = await response.blob()
-      const file = new File([blob], filename, { type: blob.type })
+      const response = await api.getSampleImageBlob(filename)
+      const file = new File([response], filename, { type: 'image/jpeg' })
       processFile(file)
     } catch (err) {
       setError('Failed to load sample image')
