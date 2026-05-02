@@ -153,13 +153,18 @@ async def startup():
         print(f"[ERROR] Failed to load metadata: {e}")
         metadata = None
     
-    # Load available models (non-blocking, won't fail if resnet50 not ready)
+    # Load available models (skip ResNet50 to save memory on startup)
     try:
         print(f"[INFO] Loading models from metadata...")
         for model_info in metadata.get("models", []):
             model_name = model_info["name"]
             model_file = model_info["model_file"]
             model_path = MODELS_DIR / model_file
+            
+            # Skip ResNet50 on free tier to save memory
+            if "ResNet50" in model_name:
+                print(f"[SKIP] Skipping {model_name} (will load on-demand)")
+                continue
             
             print(f"[DEBUG] Attempting to load: {model_name} from {model_path}")
             
