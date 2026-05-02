@@ -53,12 +53,25 @@ def download_model_from_release(model_name: str, url: str, save_path: Path) -> b
     
     try:
         print(f"[INFO] Downloading {model_name} from GitHub Releases...")
+        print(f"[INFO] URL: {url}")
         save_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Add timeout for download
+        import socket
+        socket.setdefaulttimeout(300)  # 5 minutes timeout
+        
         urllib.request.urlretrieve(url, str(save_path))
-        print(f"[OK] Downloaded {model_name} ({save_path.stat().st_size / 1e6:.1f} MB)")
+        size_mb = save_path.stat().st_size / 1e6
+        print(f"[OK] Downloaded {model_name} ({size_mb:.1f} MB)")
         return True
     except Exception as e:
-        print(f"[ERROR] Failed to download {model_name}: {e}")
+        print(f"[ERROR] Failed to download {model_name}: {type(e).__name__}: {e}")
+        # Clean up partial download
+        if save_path.exists():
+            try:
+                save_path.unlink()
+            except:
+                pass
         return False
 
 def _download_models_background():
@@ -130,9 +143,8 @@ async def startup():
     
     print("[INFO] Starting up FastAPI server...")
     
-    # Don't start background download on free tier Render (512 MB limit)
-    # ResNet50 will be downloaded on-demand when requested
-    # threading.Thread(target=_download_models_background, daemon=True).start()
+    # Don't download ResNet50 in background - it's too large for free tier memory
+    # It will be downloaded on first request to /api/predict with ResNet50
     
     # Load metadata immediately
     try:
@@ -389,7 +401,8 @@ async def predict(file: UploadFile = File(...), model_name: str = "ResNet50 (TL)
         img_size = metadata.get("img_size", [96, 96])
         X = preprocess_image(image_bytes, img_size)
         
-        # Predict
+        # Predict with timeout
+        print(f"[DEBUG] Running prediction for {model_name}...")
         t0 = time.time()
         probs = model.predict(X, verbose=0)[0]
         elapsed = (time.time() - t0) * 1000
@@ -410,6 +423,7 @@ async def predict(file: UploadFile = File(...), model_name: str = "ResNet50 (TL)
             for idx in top5_idx
         ]
         
+        print(f"[OK] Prediction done in {elapsed:.1f}ms")
         return {
             "predicted_class": pred_class,
             "confidence": confidence,
@@ -419,6 +433,7 @@ async def predict(file: UploadFile = File(...), model_name: str = "ResNet50 (TL)
         }
     
     except Exception as e:
+        print(f"[ERROR] Prediction failed: {type(e).__name__}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/predict_all")
