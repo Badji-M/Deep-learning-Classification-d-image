@@ -337,21 +337,31 @@ export default function PredictionPanel({ metadata }: PredictionPanelProps) {
         {allPredictions && (
           <div className="space-y-3 animate-in fade-in duration-500">
             {allPredictions.results.map((result: any, idx: number) => (
-              <div key={idx} className="border-2 border-gray-200 rounded-lg p-4 hover:shadow-lg transition hover:border-blue-300">
+              <div key={idx} className={`border-2 rounded-lg p-4 hover:shadow-lg transition ${
+                result.error 
+                  ? 'border-red-200 bg-red-50' 
+                  : 'border-gray-200 hover:border-blue-300'
+              }`}>
                 <div className="flex items-center justify-between mb-3">
                   <p className="font-semibold text-gray-800">{result.model}</p>
-                  <p className="text-xs font-semibold text-gray-500">{result.elapsed_ms.toFixed(0)}ms</p>
+                  {result.elapsed_ms && (
+                    <p className="text-xs font-semibold text-gray-500">{result.elapsed_ms.toFixed(0)}ms</p>
+                  )}
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <p className="text-xs text-gray-600">Classe</p>
-                    <p className="font-semibold text-gray-800">{result.predicted_class}</p>
+                {result.error ? (
+                  <p className="text-sm text-red-600">{result.error}</p>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-xs text-gray-600">Classe</p>
+                      <p className="font-semibold text-gray-800">{result.predicted_class}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600">Confiance</p>
+                      <p className="font-bold text-blue-600">{(result.confidence * 100).toFixed(1)}%</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs text-gray-600">Confiance</p>
-                    <p className="font-bold text-blue-600">{(result.confidence * 100).toFixed(1)}%</p>
-                  </div>
-                </div>
+                )}
               </div>
             ))}
           </div>
