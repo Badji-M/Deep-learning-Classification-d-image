@@ -21,12 +21,6 @@
       "f1_score": 0.0598
     },
     {
-      "name": "ResNet50 (TL)",
-      "model_file": "resnet50.keras",
-      "accuracy": 0.7667,
-      "f1_score": 0.7666
-    },
-    {
       "name": "EfficientNetB0 (TL)",
       "model_file": "efficientnet.keras",
       "accuracy": 0.7905,

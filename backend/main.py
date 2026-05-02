@@ -10,7 +10,6 @@ import cv2
 from pathlib import Path
 from typing import List
 import time
-import urllib.request
 import threading
 
 from fastapi import FastAPI, File, UploadFile, HTTPException
@@ -45,58 +44,6 @@ metadata = None
 # Startup & Shutdown
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-def download_model_from_release(model_name: str, url: str, save_path: Path) -> bool:
-    """Download model from GitHub Releases if not exists"""
-    if save_path.exists():
-        print(f"[OK] Model exists: {model_name}")
-        return True
-    
-    try:
-        print(f"[INFO] Downloading {model_name} from GitHub Releases...")
-        print(f"[INFO] URL: {url}")
-        save_path.parent.mkdir(parents=True, exist_ok=True)
-        
-        # Add timeout for download
-        import socket
-        socket.setdefaulttimeout(300)  # 5 minutes timeout
-        
-        urllib.request.urlretrieve(url, str(save_path))
-        size_mb = save_path.stat().st_size / 1e6
-        print(f"[OK] Downloaded {model_name} ({size_mb:.1f} MB)")
-        return True
-    except Exception as e:
-        print(f"[ERROR] Failed to download {model_name}: {type(e).__name__}: {e}")
-        # Clean up partial download
-        if save_path.exists():
-            try:
-                save_path.unlink()
-            except:
-                pass
-        return False
-
-def _download_models_background():
-    """Download models in background thread"""
-    print("[INFO] Background: Starting model downloads...")
-    resnet50_path = MODELS_DIR / "resnet50.keras"
-    download_model_from_release(
-        "ResNet50",
-        "https://github.com/Badji-M/Deep-learning-Classification-d-image/releases/download/v1.0-resnet50/resnet50.keras",
-        resnet50_path
-    )
-    # Load the model after download
-    if resnet50_path.exists():
-        try:
-            print(f"[DEBUG] Background: Loading ResNet50 from {resnet50_path}...")
-            model = tf.keras.models.load_model(str(resnet50_path))
-            models_cache["ResNet50 (TL)"] = model  # Use correct name from metadata
-            print("[OK] ✅ ResNet50 (TL) loaded in background after download")
-        except Exception as e:
-            print(f"[ERROR] ❌ Failed to load ResNet50 after download: {type(e).__name__}: {e}")
-            import traceback
-            print(f"[ERROR] Traceback: {traceback.format_exc()}")
-    else:
-        print("[ERROR] ResNet50 file not found after download attempt")
-
 def get_model(model_name: str):
     """Get model from cache or load if missing"""
     print(f"[get_model] Looking for '{model_name}'")
@@ -114,15 +61,6 @@ def get_model(model_name: str):
         model_path = MODELS_DIR / model_file
         print(f"[get_model] Checking path: {model_path}")
         print(f"[get_model] Path exists: {model_path.exists()}")
-        
-        # If model doesn't exist and it's ResNet50, try to download it
-        if not model_path.exists() and model_name == "ResNet50 (TL)":
-            print(f"[get_model] ResNet50 not found, attempting download...")
-            download_model_from_release(
-                "ResNet50",
-                "https://github.com/Badji-M/Deep-learning-Classification-d-image/releases/download/v1.0-resnet50/resnet50.keras",
-                model_path
-            )
         
         if model_path.exists():
             try:
@@ -143,16 +81,8 @@ async def startup():
     
     print("[INFO] Starting up FastAPI server...")
     
-    # Pre-download ResNet50 in background (don't load into memory, just download the file)
-    # This ensures it's available for quick loading on first request
-    resnet50_path = MODELS_DIR / "resnet50.keras"
-    if not resnet50_path.exists():
-        print("[INFO] Background: Pre-downloading ResNet50...")
-        threading.Thread(
-            target=download_model_from_release,
-            args=("ResNet50", "https://github.com/Badji-M/Deep-learning-Classification-d-image/releases/download/v1.0-resnet50/resnet50.keras", resnet50_path),
-            daemon=True
-        ).start()
+    # Note: ResNet50 removed from available models due to Render free tier memory limits (512 MB)
+    # Only CNN and EfficientNet are available
     
     # Load metadata immediately
     try:
@@ -173,18 +103,13 @@ async def startup():
         print(f"[ERROR] Failed to load metadata: {e}")
         metadata = None
     
-    # Load available models (skip ResNet50 to save memory on startup)
+    # Load available models (only CNN and EfficientNet)
     try:
         print(f"[INFO] Loading models from metadata...")
         for model_info in metadata.get("models", []):
             model_name = model_info["name"]
             model_file = model_info["model_file"]
             model_path = MODELS_DIR / model_file
-            
-            # Skip ResNet50 on free tier to save memory
-            if "ResNet50" in model_name:
-                print(f"[SKIP] Skipping {model_name} (will load on-demand)")
-                continue
             
             print(f"[DEBUG] Attempting to load: {model_name} from {model_path}")
             
