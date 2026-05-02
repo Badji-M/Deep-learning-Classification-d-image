@@ -143,8 +143,16 @@ async def startup():
     
     print("[INFO] Starting up FastAPI server...")
     
-    # Don't download ResNet50 in background - it's too large for free tier memory
-    # It will be downloaded on first request to /api/predict with ResNet50
+    # Pre-download ResNet50 in background (don't load into memory, just download the file)
+    # This ensures it's available for quick loading on first request
+    resnet50_path = MODELS_DIR / "resnet50.keras"
+    if not resnet50_path.exists():
+        print("[INFO] Background: Pre-downloading ResNet50...")
+        threading.Thread(
+            target=download_model_from_release,
+            args=("ResNet50", "https://github.com/Badji-M/Deep-learning-Classification-d-image/releases/download/v1.0-resnet50/resnet50.keras", resnet50_path),
+            daemon=True
+        ).start()
     
     # Load metadata immediately
     try:
